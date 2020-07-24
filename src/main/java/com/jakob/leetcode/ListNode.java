@@ -8,17 +8,26 @@ public class ListNode {
         val = x;
     }
 
-    public static void print(ListNode node) {
-        if (node == null) {
-            System.out.println("null");
-            return;
+    public static void print(ListNode head) {
+        ListNode temp = head;
+        StringBuilder sb = new StringBuilder();
+        while (temp != null) {
+            sb.append(temp.val).append("->");
+            temp = temp.next;
         }
-        StringBuilder sb = new StringBuilder(String.valueOf(node.val));
-        while (node.next != null) {
-            sb.append("->").append(node.next.val);
-            node = node.next;
+        sb.append("NULL");
+        System.out.println(sb);
+    }
+
+    public static ListNode CreateListNode(int[] nums) {
+        if (nums.length == 0) return null;
+        ListNode head = new ListNode(nums[0]);
+        ListNode cur = head;
+        for (int i = 1; i < nums.length; i++) {
+            cur.next = new ListNode(nums[i]);
+            cur = cur.next;
         }
-        System.out.println(sb.toString());
+        return head;
     }
 
     public static ListNode create(int... n) {
