@@ -1,0 +1,40 @@
+package com.jakob.springbootdemo.metrics;
+
+import com.codahale.metrics.ConsoleReporter;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
+
+import java.util.concurrent.TimeUnit;
+
+public class GetStarted {
+    static final MetricRegistry metrics = new MetricRegistry();
+
+
+    public static void main(String[] args) {
+        startReport();
+        Meter requests = metrics.meter("requests");
+        QueueManager queue = new QueueManager(metrics, "queue");
+        queue.time();
+        requests.mark();
+        queue.addJob("1");
+        queue.addJob("2");
+        queue.addJob("3");
+        queue.takeJob();
+        wait5Seconds();
+    }
+
+    static void startReport() {
+        ConsoleReporter reporter = ConsoleReporter.forRegistry(metrics)
+                .convertRatesTo(TimeUnit.SECONDS)
+                .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .build();
+        reporter.start(1, TimeUnit.SECONDS);
+    }
+
+    static void wait5Seconds() {
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException ignored) {
+        }
+    }
+}
