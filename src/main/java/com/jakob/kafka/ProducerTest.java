@@ -5,18 +5,17 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 
 import java.util.Properties;
 
+import static org.apache.kafka.clients.producer.ProducerConfig.COMPRESSION_TYPE_CONFIG;
+
 public class ProducerTest {
 
-    private static Properties producerProps = new Properties();
-
-    static {
-        producerProps.put("bootstrap.servers", "192.168.118.79:9092");
+    public static void main(String[] args) {
+        Properties producerProps = new Properties();
+        producerProps.put("bootstrap.servers", args[0]);
         producerProps.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
         producerProps.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-    }
+        producerProps.put(COMPRESSION_TYPE_CONFIG, "snappy");
 
-
-    public static void main(String[] args) {
         KafkaProducer<String, String> producer = new KafkaProducer<>(producerProps);
         ProducerRecord<String, String> r1 = new ProducerRecord<>("CustomerCountry", "Precision Products", "France");
         try {

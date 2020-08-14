@@ -15,17 +15,14 @@ import java.util.Properties;
 @Slf4j
 public class ConsumerTest {
 
-    private static Properties consumerProp = new Properties();
-
-    static {
-        consumerProp.put("bootstrap.servers", "192.168.118.79:9092");
+    public static void main(String[] args) {
+        Properties consumerProp = new Properties();
+        consumerProp.put("bootstrap.servers", args[0]);
         consumerProp.put("group.id", "CountryCounter");
         consumerProp.put("auto.commit.offset", "false");
         consumerProp.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
         consumerProp.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-    }
 
-    public static void main(String[] args) {
         KafkaConsumer<String, String> consumer = new KafkaConsumer<>(consumerProp);
         consumer.subscribe(Collections.singletonList("CustomerCountry"));
         Map<String, Integer> count = new HashMap<>();
