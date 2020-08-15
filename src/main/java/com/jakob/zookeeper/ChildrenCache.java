@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ChildrenCache {
-    protected List<String> children;
+    private List<String> children;
 
     public ChildrenCache(List<String> children) {
         this.children = children;
@@ -12,6 +12,10 @@ public class ChildrenCache {
 
     public ChildrenCache() {
         this.children = null;
+    }
+
+    public List<String> getList() {
+        return children;
     }
 
     public List<String> addAndSet(List<String> newChildren) {

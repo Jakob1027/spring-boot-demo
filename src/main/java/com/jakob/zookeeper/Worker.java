@@ -8,6 +8,7 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
 import java.util.Random;
@@ -24,7 +25,7 @@ import static org.apache.zookeeper.Watcher.Event.EventType.None;
 import static org.apache.zookeeper.ZooDefs.Ids.OPEN_ACL_UNSAFE;
 
 @Slf4j
-public class Worker implements Watcher, AutoCloseable {
+public class Worker implements Watcher, Closeable {
 
     private ZooKeeper zk;
     private String status;
@@ -179,7 +180,7 @@ public class Worker implements Watcher, AutoCloseable {
     };
 
     public void getTasks() {
-        zk.getChildren("/assign/" + serverId, newTaskWatcher, taskGetChildrenCallback, null);
+        zk.getChildren("/assign/worker-" + serverId, newTaskWatcher, taskGetChildrenCallback, null);
     }
 
     private final ChildrenCache assignedTasksCache = new ChildrenCache();
@@ -211,7 +212,7 @@ public class Worker implements Watcher, AutoCloseable {
                                 setStatus("Working");
                                 for (String task : children) {
                                     log.trace("New task: {}", task);
-                                    zk.getData("/assign/worker-" + serverId + "/" + task, false, cb, null);
+                                    zk.getData("/assign/worker-" + serverId + "/" + task, false, cb, task);
                                 }
                             }
                         }.init(assignedTasksCache.addAndSet(children), taskDataCallback));
