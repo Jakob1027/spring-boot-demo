@@ -3,18 +3,14 @@ package com.jakob.redisinaction;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.ZParams;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
 
 public class Chapter01 {
     private static final int ONE_WEEK_IN_SECONDS = 7 * 86400;
     private static final int VOTE_SCORE = 432;
     private static final int ARTICLES_PER_PAGE = 25;
 
-    public static void main(String[] args) {
+    public static final void main(String[] args) {
         new Chapter01().run();
     }
 
@@ -22,7 +18,8 @@ public class Chapter01 {
         Jedis conn = new Jedis("localhost");
         conn.select(15);
 
-        String articleId = postArticle(conn, "username", "A title", "http://www.google.com");
+        String articleId = postArticle(
+                conn, "username", "A title", "http://www.google.com");
         System.out.println("We posted a new article with id: " + articleId);
         System.out.println("Its HASH looks like:");
         Map<String, String> articleData = conn.hgetAll("article:" + articleId);
@@ -32,57 +29,25 @@ public class Chapter01 {
 
         System.out.println();
 
-        articleVote(conn, "other_user", "article:" + articleId, true);
+        articleVote(conn, "other_user", "article:" + articleId);
         String votes = conn.hget("article:" + articleId, "votes");
         System.out.println("We voted for the article, it now has votes: " + votes);
         assert Integer.parseInt(votes) > 1;
 
-        articleVote(conn, "another_user", "article:" + articleId, false);
-        String devotes = conn.hget("article:" + articleId, "devotes");
-        System.out.println("We devoted for the article, it now has devotes: " + devotes);
-        assert Integer.parseInt(devotes) > 0;
-
-        System.out.println("The currently highest-scoring articles ar: ");
+        System.out.println("The currently highest-scoring articles are:");
         List<Map<String, String>> articles = getArticles(conn, 1);
         printArticles(articles);
         assert articles.size() >= 1;
 
         addGroups(conn, articleId, new String[]{"new-group"});
         System.out.println("We added the article to a new group, other articles include:");
-        List<Map<String, String>> groupArticles = getGroupArticles(conn, "new-group", 1);
-        printArticles(groupArticles);
-        assert groupArticles.size() > 1;
-    }
-
-    public void articleVote(Jedis conn, String user, String article, boolean up) {
-        long cutoff = System.currentTimeMillis() / 1000 - ONE_WEEK_IN_SECONDS;
-        if (conn.zscore("time:", article) < cutoff) {
-            return;
-        }
-        String articleId = article.substring(article.indexOf(":") + 1);
-        if (up) {
-            if (conn.smove("devoted:" + articleId, "voted:" + articleId, user) == 1) {
-                conn.zincrby("score:", VOTE_SCORE * 2, article);
-                conn.hincrBy(article, "votes", 1);
-                conn.hincrBy(article, "devotes", -1);
-            } else if (conn.sadd("voted:" + articleId, user) == 1) {
-                conn.zincrby("score:", VOTE_SCORE, article);
-                conn.hincrBy(article, "votes", 1);
-            }
-        } else {
-            if (conn.smove("voted:" + articleId, "devoted:" + articleId, user) == 1) {
-                conn.zincrby("score:", -VOTE_SCORE * 2, article);
-                conn.hincrBy(article, "votes", -1);
-                conn.hincrBy(article, "devotes", 1);
-            } else if (conn.sadd("devoted:" + articleId, user) == 1) {
-                conn.zincrby("score:", -VOTE_SCORE, article);
-                conn.hincrBy(article, "devotes", 1);
-            }
-        }
+        articles = getGroupArticles(conn, "new-group", 1);
+        printArticles(articles);
+        assert articles.size() >= 1;
     }
 
     public String postArticle(Jedis conn, String user, String title, String link) {
-        String articleId = conn.incr("article:").toString();
+        String articleId = String.valueOf(conn.incr("article:"));
 
         String voted = "voted:" + articleId;
         conn.sadd(voted, user);
@@ -90,20 +55,32 @@ public class Chapter01 {
 
         long now = System.currentTimeMillis() / 1000;
         String article = "article:" + articleId;
-        Map<String, String> articleData = new HashMap<>();
+        HashMap<String, String> articleData = new HashMap<String, String>();
         articleData.put("title", title);
         articleData.put("link", link);
-        articleData.put("poster", user);
-        articleData.put("time", String.valueOf(now));
+        articleData.put("user", user);
+        articleData.put("now", String.valueOf(now));
         articleData.put("votes", "1");
-        articleData.put("devotes", "0");
         conn.hmset(article, articleData);
-
-        conn.zadd("time:", now, article);
         conn.zadd("score:", now + VOTE_SCORE, article);
+        conn.zadd("time:", now, article);
 
         return articleId;
     }
+
+    public void articleVote(Jedis conn, String user, String article) {
+        long cutoff = (System.currentTimeMillis() / 1000) - ONE_WEEK_IN_SECONDS;
+        if (conn.zscore("time:", article) < cutoff) {
+            return;
+        }
+
+        String articleId = article.substring(article.indexOf(':') + 1);
+        if (conn.sadd("voted:" + articleId, user) == 1) {
+            conn.zincrby("score:", VOTE_SCORE, article);
+            conn.hincrBy(article, "votes", 1);
+        }
+    }
+
 
     public List<Map<String, String>> getArticles(Jedis conn, int page) {
         return getArticles(conn, page, "score:");
@@ -114,11 +91,14 @@ public class Chapter01 {
         int end = start + ARTICLES_PER_PAGE - 1;
 
         Set<String> ids = conn.zrevrange(order, start, end);
-        return ids.stream().map(id -> {
+        List<Map<String, String>> articles = new ArrayList<Map<String, String>>();
+        for (String id : ids) {
             Map<String, String> articleData = conn.hgetAll(id);
             articleData.put("id", id);
-            return articleData;
-        }).collect(Collectors.toList());
+            articles.add(articleData);
+        }
+
+        return articles;
     }
 
     public void addGroups(Jedis conn, String articleId, String[] toAdd) {
@@ -135,8 +115,8 @@ public class Chapter01 {
     public List<Map<String, String>> getGroupArticles(Jedis conn, String group, int page, String order) {
         String key = order + group;
         if (!conn.exists(key)) {
-            ZParams zParams = new ZParams().aggregate(ZParams.Aggregate.MAX);
-            conn.zinterstore(key, zParams, order, "group:" + group);
+            ZParams params = new ZParams().aggregate(ZParams.Aggregate.MAX);
+            conn.zinterstore(key, params, "group:" + group, order);
             conn.expire(key, 60);
         }
         return getArticles(conn, page, key);
@@ -146,11 +126,11 @@ public class Chapter01 {
         for (Map<String, String> article : articles) {
             System.out.println("  id: " + article.get("id"));
             for (Map.Entry<String, String> entry : article.entrySet()) {
-                if ("id".equals(entry.getKey())) continue;
+                if (entry.getKey().equals("id")) {
+                    continue;
+                }
                 System.out.println("    " + entry.getKey() + ": " + entry.getValue());
             }
         }
     }
-
-
 }
