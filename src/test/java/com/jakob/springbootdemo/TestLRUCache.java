@@ -1,6 +1,6 @@
 package com.jakob.springbootdemo;
 
-import com.jakob.LRUCache;
+import com.jakob.springbootdemo.utils.LRUCache;
 import com.jakob.springbootdemo.utils.LinkedLRUCache;
 import org.junit.Assert;
 import org.junit.Test;

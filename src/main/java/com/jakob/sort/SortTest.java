@@ -16,7 +16,7 @@ public class SortTest {
 
     private static final int N = 10000000;
 
-    private Integer[] b = {1};
+    private Integer[] b = {1, 3, 6, 2, 8, 45, 3, 1, 4, 6, 7, 8, 98, 9, 6, 56, 4, 3, 5, 6};
 
     public static void main(String[] args) {
 
@@ -28,7 +28,7 @@ public class SortTest {
             e.printStackTrace();
         }*/
         try {
-            test(a,Sort.class.getMethod("insertionSort", new Class[]{Array.class}));
+            test(a, Sort.class.getMethod("quickSort3Ways", new Class[]{Array.class}));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
@@ -89,6 +89,15 @@ public class SortTest {
         System.out.println(Arrays.toString(b));
     }
 
+    /**
+     * 测试三路快排
+     */
+    @Test
+    public void quick3WaysTest() {
+        Sort.quickSort3Ways(b);
+        System.out.println(Arrays.toString(b));
+    }
+
     private static Integer[] array(int n) {
         Integer[] a = new Integer[n];
         for (int i = 0; i < n; i++) {
@@ -104,7 +113,7 @@ public class SortTest {
         }
         long st = System.currentTimeMillis();
         try {
-            method.invoke(null,a);
+            method.invoke(null, a);
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         } catch (InvocationTargetException e) {

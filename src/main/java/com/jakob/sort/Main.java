@@ -30,8 +30,8 @@ public class Main {
 
     private static void output(Long[] arr) {
         int i;
-        for (i = 0; i < n-1; i++) {
-            System.out.print(arr[i]+" ");
+        for (i = 0; i < n - 1; i++) {
+            System.out.print(arr[i] + " ");
         }
         System.out.println(arr[i]);
     }

@@ -1,5 +1,7 @@
 package com.jakob.sort;
 
+import java.util.Random;
+
 /**
  * @author Jakob
  */
@@ -65,7 +67,7 @@ public class Sort {
      */
     public static <T extends Comparable<? super T>> void heapSort(T[] a) {
         //创建最大堆
-        for (int i = a.length/2-1; i >= 0; i--) {
+        for (int i = a.length / 2 - 1; i >= 0; i--) {
             percDown(i, a.length, a);
         }
         //将最大元素放到最后
@@ -95,6 +97,16 @@ public class Sort {
      */
     public static <T extends Comparable<? super T>> void quickSort(T[] a) {
         quickSort(a, 0, a.length - 1);
+    }
+
+    /**
+     * 三路快排的驱动程序
+     *
+     * @param a
+     * @param <T>
+     */
+    public static <T extends Comparable<? super T>> void quickSort3Ways(T[] a) {
+        quickSort3Ways(a, 0, a.length - 1);
     }
 
 
@@ -229,6 +241,38 @@ public class Sort {
         } else {
             insertionSort1(a, left, right);
         }
+    }
+
+    /**
+     * 三路快排
+     * @param arr 待排序数组
+     * @param left 左边界（含）
+     * @param right 右边界（含）
+     * @param <T> 数组元素类型
+     */
+    private static <T extends Comparable<? super T>> void quickSort3Ways(T[] arr, int left, int right) {
+        if (right - left <= 5) {
+            insertionSort1(arr, left, right);
+            return;
+        }
+
+        int ptr = new Random().nextInt(right - left + 1) + left;
+        swap(arr, left, ptr);
+        T v = arr[left];
+        int lt = left, gt = right + 1;
+        for (int i = left + 1; i < gt; ) {
+            if (arr[i].compareTo(v) < 0) {
+                swap(arr, lt + 1, i++);
+                lt++;
+            } else if (arr[i].compareTo(v) > 0) {
+                swap(arr, i, gt - 1);
+                gt--;
+            } else i++;
+        }
+        swap(arr, left, lt);
+
+        quickSort3Ways(arr, left, lt - 1);
+        quickSort3Ways(arr, gt, right);
     }
 
     /**
